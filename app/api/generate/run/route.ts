@@ -66,6 +66,8 @@ export async function POST(request: Request) {
         model: activeConfig.model,
         temperature: activeConfig.temperature,
         maxTokens: activeConfig.max_tokens,
+        thinkingEnabled: activeConfig.thinking_enabled,
+        thinkingBudget: activeConfig.thinking_budget,
       };
     }
 

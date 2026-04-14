@@ -35,6 +35,8 @@ export function PromptEditor() {
   const [useCustomModel, setUseCustomModel] = useState(false);
   const [temperature, setTemperature] = useState(0.4);
   const [maxTokens, setMaxTokens] = useState(2000);
+  const [thinkingEnabled, setThinkingEnabled] = useState(false);
+  const [thinkingBudget, setThinkingBudget] = useState(10000);
 
   const fetchConfigs = useCallback(async () => {
     const res = await fetch("/api/prompt-configs");
@@ -61,6 +63,9 @@ export function PromptEditor() {
     setMaxTokens(config.max_tokens);
     setTemperature(config.temperature);
 
+    setThinkingEnabled(config.thinking_enabled ?? false);
+    setThinkingBudget(config.thinking_budget ?? 10000);
+
     if (MODEL_OPTIONS.includes(config.model)) {
       setModel(config.model);
       setUseCustomModel(false);
@@ -84,6 +89,8 @@ export function PromptEditor() {
         model: selectedModel,
         temperature,
         max_tokens: maxTokens,
+        thinking_enabled: thinkingEnabled,
+        thinking_budget: thinkingBudget,
       }),
     });
 
@@ -164,7 +171,7 @@ export function PromptEditor() {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
             <Label>Model</Label>
             {!useCustomModel ? (
@@ -229,6 +236,62 @@ export function PromptEditor() {
           </div>
         </div>
 
+        {/* Thinking Mode */}
+        <div className="rounded-lg border border-border p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="thinking-toggle" className="text-sm font-medium">
+                Extended Thinking
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Let Claude reason step-by-step before responding. Works with Anthropic models.
+              </p>
+            </div>
+            <button
+              id="thinking-toggle"
+              type="button"
+              role="switch"
+              aria-checked={thinkingEnabled}
+              onClick={() => setThinkingEnabled(!thinkingEnabled)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                thinkingEnabled ? "bg-primary" : "bg-muted"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
+                  thinkingEnabled ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+          {thinkingEnabled && (
+            <div className="space-y-2">
+              <Label htmlFor="thinking-budget">
+                Thinking Budget: {thinkingBudget.toLocaleString()} tokens
+              </Label>
+              <input
+                id="thinking-budget"
+                type="range"
+                min="5000"
+                max="50000"
+                step="5000"
+                value={thinkingBudget}
+                onChange={(e) => setThinkingBudget(parseInt(e.target.value))}
+                className="w-full accent-primary"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Light (5k)</span>
+                <span>Deep (50k)</span>
+              </div>
+              {thinkingEnabled && (
+                <p className="text-xs text-amber-600">
+                  Note: Thinking mode overrides temperature to 1.0 for Anthropic models and increases cost/latency.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
         <Button
           onClick={handleSaveNewVersion}
           disabled={saving || !name.trim() || !systemPrompt.trim() || !selectedModel.trim()}
@@ -272,7 +335,9 @@ export function PromptEditor() {
                       {config.name}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {config.model} &middot;{" "}
+                      {config.model}
+                      {config.thinking_enabled && " + Thinking"}
+                      {" "}&middot;{" "}
                       {new Date(config.created_at).toLocaleDateString()}
                     </p>
                   </div>

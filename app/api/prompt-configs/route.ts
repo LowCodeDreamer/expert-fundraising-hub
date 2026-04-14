@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name, system_prompt, model, temperature, max_tokens } = body;
+  const { name, system_prompt, model, temperature, max_tokens, thinking_enabled, thinking_budget } = body;
 
   if (!name || !system_prompt || !model) {
     return NextResponse.json(
@@ -67,6 +67,8 @@ export async function POST(request: Request) {
       model,
       temperature: temperature ?? 0.4,
       max_tokens: max_tokens ?? 2000,
+      thinking_enabled: thinking_enabled ?? false,
+      thinking_budget: thinking_budget ?? 10000,
       is_active: true,
     })
     .select()

@@ -7,6 +7,8 @@ create table prompt_configs (
   model text not null default 'anthropic/claude-sonnet-4',
   temperature numeric(3,2) not null default 0.40,
   max_tokens integer not null default 2000,
+  thinking_enabled boolean not null default false,
+  thinking_budget integer not null default 10000,
   is_active boolean not null default false,
   created_at timestamptz not null default now()
 );

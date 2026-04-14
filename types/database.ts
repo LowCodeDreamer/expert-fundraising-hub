@@ -62,6 +62,8 @@ export interface PromptConfig {
   model: string;
   temperature: number;
   max_tokens: number;
+  thinking_enabled: boolean;
+  thinking_budget: number;
   is_active: boolean;
   created_at: string;
 }

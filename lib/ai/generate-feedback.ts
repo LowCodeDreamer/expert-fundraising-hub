@@ -142,6 +142,8 @@ export interface PromptConfigInput {
   model: string;
   temperature: number;
   maxTokens: number;
+  thinkingEnabled?: boolean;
+  thinkingBudget?: number;
 }
 
 const DEFAULT_CONFIG: PromptConfigInput = {
@@ -149,6 +151,8 @@ const DEFAULT_CONFIG: PromptConfigInput = {
   model: "anthropic/claude-sonnet-4",
   temperature: 0.4,
   maxTokens: 2000,
+  thinkingEnabled: false,
+  thinkingBudget: 10000,
 };
 
 export async function generateFeedback(
@@ -158,7 +162,10 @@ export async function generateFeedback(
   w3: Worksheet3Answers,
   config?: PromptConfigInput
 ): Promise<FeedbackDraft> {
-  const { systemPrompt, model, temperature, maxTokens } = config ?? DEFAULT_CONFIG;
+  const { systemPrompt, model, temperature, maxTokens, thinkingEnabled, thinkingBudget } = {
+    ...DEFAULT_CONFIG,
+    ...config,
+  };
   const userPrompt = buildUserPrompt(participantName, w1, w2, w3);
 
   const messages: { role: "system" | "user"; content: string }[] = [
@@ -166,12 +173,17 @@ export async function generateFeedback(
     { role: "user", content: userPrompt },
   ];
 
+  const reasoning = thinkingEnabled
+    ? { effort: "high" as const, max_tokens: thinkingBudget ?? 10000 }
+    : undefined;
+
   // First attempt
   const response = await chatCompletion({
     model,
     messages,
     max_tokens: maxTokens,
     temperature,
+    reasoning,
   });
 
   try {
@@ -186,6 +198,7 @@ export async function generateFeedback(
       ],
       max_tokens: maxTokens,
       temperature,
+      reasoning,
     });
 
     return parseJSON(retryResponse);
