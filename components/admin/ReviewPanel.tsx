@@ -192,16 +192,11 @@ export function ReviewPanel({
         </div>
       )}
 
-      {/* Two-column layout */}
+      {/* Paired worksheet + feedback layout */}
       {(job.status === "draft" || job.status === "approved") && (
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Left — Participant Answers */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-heading font-semibold text-foreground">
-              Participant Answers
-            </h3>
-
-            {/* Worksheet 1 */}
+        <div className="space-y-8">
+          {/* Worksheet 1 */}
+          <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-lg border border-border p-4 space-y-4">
               <h4 className="font-heading font-semibold text-foreground">
                 Worksheet 1: Self-Assessment
@@ -218,8 +213,36 @@ export function ReviewPanel({
                   )
                 )}
             </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Worksheet 1 Feedback</Label>
+                <button
+                  type="button"
+                  onClick={() => resetSection("worksheet_1")}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Reset to AI draft
+                </button>
+              </div>
+              <Textarea
+                value={humanEdit.worksheet_1}
+                onChange={(e) =>
+                  setHumanEdit((prev) => ({
+                    ...prev,
+                    worksheet_1: e.target.value,
+                  }))
+                }
+                className="min-h-[calc(100%-2.5rem)]"
+                rows={6}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {humanEdit.worksheet_1.length} characters
+              </p>
+            </div>
+          </div>
 
-            {/* Worksheet 2 */}
+          {/* Worksheet 2 */}
+          <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-lg border border-border p-4 space-y-4">
               <h4 className="font-heading font-semibold text-foreground">
                 Worksheet 2: Applying the Framework
@@ -236,8 +259,36 @@ export function ReviewPanel({
                   )
                 )}
             </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Worksheet 2 Feedback</Label>
+                <button
+                  type="button"
+                  onClick={() => resetSection("worksheet_2")}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Reset to AI draft
+                </button>
+              </div>
+              <Textarea
+                value={humanEdit.worksheet_2}
+                onChange={(e) =>
+                  setHumanEdit((prev) => ({
+                    ...prev,
+                    worksheet_2: e.target.value,
+                  }))
+                }
+                className="min-h-[calc(100%-2.5rem)]"
+                rows={10}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {humanEdit.worksheet_2.length} characters
+              </p>
+            </div>
+          </div>
 
-            {/* Worksheet 3 */}
+          {/* Worksheet 3 */}
+          <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-lg border border-border p-4 space-y-4">
               <h4 className="font-heading font-semibold text-foreground">
                 Worksheet 3: Head-Heart-Hara
@@ -254,44 +305,36 @@ export function ReviewPanel({
                   )
                 )}
             </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Worksheet 3 Feedback</Label>
+                <button
+                  type="button"
+                  onClick={() => resetSection("worksheet_3")}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Reset to AI draft
+                </button>
+              </div>
+              <Textarea
+                value={humanEdit.worksheet_3}
+                onChange={(e) =>
+                  setHumanEdit((prev) => ({
+                    ...prev,
+                    worksheet_3: e.target.value,
+                  }))
+                }
+                className="min-h-[calc(100%-2.5rem)]"
+                rows={6}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {humanEdit.worksheet_3.length} characters
+              </p>
+            </div>
           </div>
 
-          {/* Right — Feedback Editor */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-heading font-semibold text-foreground">
-              Feedback Editor
-            </h3>
-
-            {(["worksheet_1", "worksheet_2", "worksheet_3"] as const).map(
-              (key, i) => (
-                <div key={key} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Worksheet {i + 1} Feedback</Label>
-                    <button
-                      type="button"
-                      onClick={() => resetSection(key)}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Reset to AI draft
-                    </button>
-                  </div>
-                  <Textarea
-                    value={humanEdit[key]}
-                    onChange={(e) =>
-                      setHumanEdit((prev) => ({
-                        ...prev,
-                        [key]: e.target.value,
-                      }))
-                    }
-                    rows={6}
-                  />
-                  <p className="text-xs text-muted-foreground text-right">
-                    {humanEdit[key].length} characters
-                  </p>
-                </div>
-              )
-            )}
-
+          {/* Reviewer notes + actions */}
+          <div className="border-t border-border pt-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reviewer-notes">Reviewer Notes (internal)</Label>
               <Textarea
