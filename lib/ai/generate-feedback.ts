@@ -152,7 +152,7 @@ export async function generateFeedback(
 
   // First attempt
   const response = await chatCompletion({
-    model: "anthropic/claude-sonnet-4-20250514",
+    model: "anthropic/claude-sonnet-4",
     messages,
     max_tokens: 2000,
     temperature: 0.4,
@@ -163,7 +163,7 @@ export async function generateFeedback(
   } catch {
     // Retry with stricter instruction
     const retryResponse = await chatCompletion({
-      model: "anthropic/claude-sonnet-4-20250514",
+      model: "anthropic/claude-sonnet-4",
       messages: [
         ...messages,
         { role: "user" as const, content: "Your previous response was not valid JSON. Return ONLY the JSON object, nothing else." },
