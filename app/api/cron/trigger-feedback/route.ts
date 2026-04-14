@@ -9,16 +9,33 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createServiceClient();
-  const sevenDaysAgo = new Date(
-    Date.now() - 7 * 24 * 60 * 60 * 1000
-  ).toISOString();
 
-  // Find eligible participants: 3 worksheets + within 7-day window + pending
-  const { data: pendingJobs } = await supabase
+  // Fetch time gate settings from key-value table
+  const { data: settingsRows } = await supabase
+    .from("app_settings")
+    .select("key, value")
+    .in("key", ["time_gate_enabled", "time_gate_days"]);
+
+  const settingsMap = Object.fromEntries(
+    (settingsRows || []).map((r: { key: string; value: unknown }) => [r.key, r.value])
+  );
+  const timeGateEnabled = settingsMap.time_gate_enabled ?? true;
+  const timeGateDays = Number(settingsMap.time_gate_days) || 7;
+
+  // Find eligible participants: 3 worksheets + pending (+ optional time gate)
+  let query = supabase
     .from("feedback_jobs")
     .select("participant_id, participants!inner(course_started_at)")
-    .eq("status", "pending")
-    .gte("participants.course_started_at", sevenDaysAgo);
+    .eq("status", "pending");
+
+  if (timeGateEnabled) {
+    const cutoff = new Date(
+      Date.now() - timeGateDays * 24 * 60 * 60 * 1000
+    ).toISOString();
+    query = query.gte("participants.course_started_at", cutoff);
+  }
+
+  const { data: pendingJobs } = await query;
 
   if (!pendingJobs || pendingJobs.length === 0) {
     return NextResponse.json({ triggered: 0, participantIds: [] });

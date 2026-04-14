@@ -82,3 +82,9 @@ export interface FeedbackJob {
   created_at: string;
   updated_at: string;
 }
+
+export interface AppSettings {
+  key: string;
+  value: unknown;
+  updated_at: string;
+}

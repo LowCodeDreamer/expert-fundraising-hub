@@ -47,6 +47,16 @@ export function AdminHeader() {
             >
               Prompts
             </Link>
+            <Link
+              href="/admin/settings"
+              className={`text-sm font-medium transition-colors hover:text-foreground ${
+                pathname === "/admin/settings"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Settings
+            </Link>
           </nav>
         </div>
         <Button variant="outline" size="sm" onClick={handleLogout}>

@@ -1,202 +1,352 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { ProgressIndicator } from "@/components/form/ProgressIndicator";
-import { FormStep1 } from "@/components/form/FormStep1";
-import { FormStep2 } from "@/components/form/FormStep2";
-import { FormStep3 } from "@/components/form/FormStep3";
-import { ConfirmationScreen } from "@/components/form/ConfirmationScreen";
-import type {
-  Worksheet1Answers,
-  Worksheet2Answers,
-  Worksheet3Answers,
-} from "@/types/database";
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { getWorksheetByNumber } from "@/lib/form/questions";
+import type { WorksheetConfig, QuestionConfig } from "@/lib/form/questions";
+import { TypeformLayout } from "@/components/form/TypeformLayout";
+import { TypeformQuestion } from "@/components/form/TypeformQuestion";
+import { TypeformTextInput } from "@/components/form/TypeformTextInput";
+import { TypeformTextarea } from "@/components/form/TypeformTextarea";
+import { TypeformRadioGroup } from "@/components/form/TypeformRadioGroup";
+import { WorksheetReview } from "@/components/form/WorksheetReview";
+import { WorksheetComplete } from "@/components/form/WorksheetComplete";
 
-const emptyW1: Worksheet1Answers = { q1_working: "", q2_stuck: "" };
-const emptyW2: Worksheet2Answers = {
-  q1_led_with: "" as Worksheet2Answers["q1_led_with"],
-  q2_impact_statement: "",
-  q3_mindset: "" as Worksheet2Answers["q3_mindset"],
-  q4_limiting_belief: "",
-  q5_donor_list: "" as Worksheet2Answers["q5_donor_list"],
-  q6_meeting_prep: "",
-};
-const emptyW3: Worksheet3Answers = {
-  q1_donor_center: "" as Worksheet3Answers["q1_donor_center"],
-  q2_breakdown: "",
-  q3_redo: "",
-};
+interface ParticipantData {
+  name: string | null;
+  email: string;
+  completedWorksheets: number[];
+  answers: Record<number, Record<string, string>>;
+}
+
+type FormMode = "loading" | "typeform" | "review" | "complete" | "error";
 
 export default function FormPage() {
-  const [step, setStep] = useState(1);
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    }>
+      <FormPageInner />
+    </Suspense>
+  );
+}
+
+function FormPageInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const email = searchParams.get("email") || "";
+  const worksheetParam = parseInt(searchParams.get("worksheet") || "1", 10);
+  const worksheetNumber = ([1, 2, 3].includes(worksheetParam) ? worksheetParam : 1) as 1 | 2 | 3;
+
+  const [mode, setMode] = useState<FormMode>("loading");
+  const [participant, setParticipant] = useState<ParticipantData | null>(null);
+  const [worksheet, setWorksheet] = useState<WorksheetConfig | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [w1, setW1] = useState<Worksheet1Answers>(emptyW1);
-  const [w2, setW2] = useState<Worksheet2Answers>(emptyW2);
-  const [w3, setW3] = useState<Worksheet3Answers>(emptyW3);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  function validateStep1(): boolean {
-    const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = "Name is required";
-    if (!email.trim()) errs.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      errs.email = "Please enter a valid email";
-    if (!w1.q1_working.trim()) errs.q1_working = "This field is required";
-    if (!w1.q2_stuck.trim()) errs.q2_stuck = "This field is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  function validateStep2(): boolean {
-    const errs: Record<string, string> = {};
-    if (!w2.q1_led_with) errs.q1_led_with = "Please select an option";
-    if (!w2.q2_impact_statement.trim())
-      errs.q2_impact_statement = "This field is required";
-    if (!w2.q3_mindset) errs.q3_mindset = "Please select an option";
-    if (!w2.q4_limiting_belief.trim())
-      errs.q4_limiting_belief = "This field is required";
-    if (!w2.q5_donor_list) errs.q5_donor_list = "Please select an option";
-    if (!w2.q6_meeting_prep.trim())
-      errs.q6_meeting_prep = "This field is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  function validateStep3(): boolean {
-    const errs: Record<string, string> = {};
-    if (!w3.q1_donor_center) errs.q1_donor_center = "Please select a center";
-    if (!w3.q2_breakdown.trim()) errs.q2_breakdown = "This field is required";
-    if (!w3.q3_redo.trim()) errs.q3_redo = "This field is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  function handleNext1() {
-    if (validateStep1()) {
-      setStep(2);
-      window.scrollTo(0, 0);
+  // Build the question list: for worksheet 1, prepend name question
+  const buildQuestions = useCallback((ws: WorksheetConfig): QuestionConfig[] => {
+    if (ws.number === 1) {
+      return [
+        { id: "_name", type: "text" as const, label: "What's your name?", placeholder: "Your full name" },
+        ...ws.questions,
+      ];
     }
-  }
+    return ws.questions;
+  }, []);
 
-  function handleNext2() {
-    if (validateStep2()) {
-      setStep(3);
-      window.scrollTo(0, 0);
+  // Fetch participant state on mount
+  useEffect(() => {
+    if (!email) {
+      setMode("error");
+      setErrorMessage("No email provided. Please access this form from the course.");
+      return;
     }
-  }
 
-  async function handleSubmit() {
-    if (!validateStep3()) return;
+    const ws = getWorksheetByNumber(worksheetNumber);
+    if (!ws) {
+      setMode("error");
+      setErrorMessage("Invalid worksheet number.");
+      return;
+    }
+    setWorksheet(ws);
 
+    async function fetchParticipant() {
+      try {
+        const res = await fetch(`/api/participant?email=${encodeURIComponent(email)}`);
+        if (!res.ok) throw new Error("Failed to load participant data");
+        const data: ParticipantData = await res.json();
+        setParticipant(data);
+
+        // Guard: if worksheet > 1, check prerequisite worksheets
+        for (let i = 1; i < worksheetNumber; i++) {
+          if (!data.completedWorksheets.includes(i)) {
+            router.replace(`/form?email=${encodeURIComponent(email)}&worksheet=${i}`);
+            return;
+          }
+        }
+
+        // Pre-fill name from participant data
+        if (data.name) setName(data.name);
+
+        // Determine mode
+        if (data.completedWorksheets.includes(worksheetNumber)) {
+          // Returning user — load their existing answers
+          const existing = data.answers[worksheetNumber] || {};
+          const answerMap: Record<string, string> = {};
+          for (const [k, v] of Object.entries(existing)) {
+            answerMap[k] = String(v);
+          }
+          setAnswers(answerMap);
+          setMode("review");
+        } else {
+          // New submission — Typeform mode
+          setAnswers({});
+          setCurrentQuestion(0);
+          setMode("typeform");
+        }
+      } catch {
+        setMode("error");
+        setErrorMessage("Something went wrong loading your data. Please try again.");
+      }
+    }
+
+    fetchParticipant();
+  }, [email, worksheetNumber, router]);
+
+  // Submit a single worksheet
+  async function submitWorksheet(submittedAnswers: Record<string, string>) {
     setIsSubmitting(true);
+    setErrors({});
     try {
-      const res = await fetch("/api/submit", {
+      const res = await fetch("/api/submit-worksheet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
           email,
-          worksheet1: w1,
-          worksheet2: w2,
-          worksheet3: w3,
+          name: name || undefined,
+          worksheetNumber,
+          answers: submittedAnswers,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        setErrors({ submit: data.error || "Submission failed" });
-        return;
+        if (data.details) {
+          // Zod validation errors — map to field errors
+          const fieldErrors: Record<string, string> = {};
+          for (const issue of data.details) {
+            const path = issue.path?.[0];
+            if (path) fieldErrors[String(path)] = issue.message;
+          }
+          setErrors(fieldErrors);
+        } else {
+          setErrors({ _submit: data.error || "Submission failed" });
+        }
+        return false;
       }
 
-      setIsComplete(true);
-      window.scrollTo(0, 0);
+      return true;
     } catch {
-      setErrors({ submit: "Something went wrong. Please try again." });
+      setErrors({ _submit: "Something went wrong. Please try again." });
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  if (isComplete) {
+  // Typeform: validate current question and advance
+  function validateAndAdvance() {
+    if (!worksheet) return;
+    const questions = buildQuestions(worksheet);
+    const q = questions[currentQuestion];
+    if (!q) return;
+
+    // Validate
+    if (q.id === "_name") {
+      if (!name.trim()) {
+        setErrors({ _name: "Please enter your name" });
+        return;
+      }
+    } else {
+      const val = answers[q.id] || "";
+      if (!val.trim()) {
+        setErrors({ [q.id]: q.type === "radio" ? "Please select an option" : "This field is required" });
+        return;
+      }
+    }
+
+    setErrors({});
+
+    // If last question, submit
+    if (currentQuestion === questions.length - 1) {
+      handleTypeformSubmit();
+      return;
+    }
+
+    // Advance
+    setCurrentQuestion((prev) => prev + 1);
+  }
+
+  function handleBack() {
+    if (currentQuestion > 0) {
+      setCurrentQuestion((prev) => prev - 1);
+      setErrors({});
+    }
+  }
+
+  async function handleTypeformSubmit() {
+    if (!worksheet) return;
+
+    // Build the answers object (excluding the _name pseudo-question)
+    const submittedAnswers: Record<string, string> = {};
+    for (const q of worksheet.questions) {
+      submittedAnswers[q.id] = answers[q.id] || "";
+    }
+
+    const success = await submitWorksheet(submittedAnswers);
+    if (success) {
+      setMode("complete");
+    }
+  }
+
+  async function handleReviewUpdate(updatedAnswers: Record<string, string>) {
+    const success = await submitWorksheet(updatedAnswers);
+    if (success) {
+      setAnswers(updatedAnswers);
+      setMode("complete");
+    }
+  }
+
+  // --- Render ---
+
+  if (mode === "loading") {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="mx-auto max-w-2xl px-4 py-8">
-          <ConfirmationScreen name={name} />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (mode === "error") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-heading font-bold text-foreground mb-3">Oops</h1>
+          <p className="text-muted-foreground">{errorMessage}</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <div className="text-center mb-2">
-          <h1 className="text-3xl font-heading font-bold text-foreground tracking-tight">
-            Foundations of Donor Alignment
-          </h1>
-          <div className="mx-auto mt-3 h-0.5 w-16 bg-accent rounded-full" />
-          <p className="mt-3 text-muted-foreground">
-            Complete all three worksheets to receive your personalized coaching
-            feedback.
-          </p>
-        </div>
+  if (mode === "complete") {
+    return <WorksheetComplete worksheetNumber={worksheetNumber} name={name || undefined} />;
+  }
 
-        <ProgressIndicator currentStep={step} totalSteps={3} />
+  if (mode === "review" && worksheet) {
+    return (
+      <WorksheetReview
+        worksheet={worksheet}
+        answers={answers}
+        onUpdate={handleReviewUpdate}
+        isSaving={isSubmitting}
+      />
+    );
+  }
 
-        {errors.submit && (
+  // Typeform mode
+  if (mode === "typeform" && worksheet) {
+    const questions = buildQuestions(worksheet);
+    const totalQuestions = questions.length;
+
+    return (
+      <TypeformLayout
+        worksheetTitle={`Worksheet ${worksheet.number}: ${worksheet.title}`}
+        progress={{ current: currentQuestion + 1, total: totalQuestions }}
+        onBack={handleBack}
+        showBack={currentQuestion > 0}
+      >
+        {errors._submit && (
           <div className="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-            {errors.submit}
+            {errors._submit}
           </div>
         )}
 
-        <Card>
-          <CardContent className="p-6 sm:p-8">
-            {step === 1 && (
-              <FormStep1
-                name={name}
-                email={email}
-                answers={w1}
-                onNameChange={setName}
-                onEmailChange={setEmail}
-                onAnswersChange={setW1}
-                onNext={handleNext1}
-                errors={errors}
-              />
-            )}
-            {step === 2 && (
-              <FormStep2
-                answers={w2}
-                onAnswersChange={setW2}
-                onNext={handleNext2}
-                onBack={() => {
-                  setStep(1);
-                  setErrors({});
-                  window.scrollTo(0, 0);
-                }}
-                errors={errors}
-              />
-            )}
-            {step === 3 && (
-              <FormStep3
-                answers={w3}
-                onAnswersChange={setW3}
-                onSubmit={handleSubmit}
-                onBack={() => {
-                  setStep(2);
-                  setErrors({});
-                  window.scrollTo(0, 0);
-                }}
-                errors={errors}
-                isSubmitting={isSubmitting}
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+        <h2 className="text-2xl sm:text-3xl font-heading font-bold text-foreground mb-8 leading-snug">
+          {questions[currentQuestion]?.label}
+        </h2>
+
+        <div className="relative">
+          {questions.map((q, idx) => (
+            <TypeformQuestion
+              key={q.id}
+              isActive={idx === currentQuestion}
+              questionNumber={idx + 1}
+              totalQuestions={totalQuestions}
+            >
+              {q.id === "_name" ? (
+                <TypeformTextInput
+                  value={name}
+                  onChange={setName}
+                  placeholder={q.placeholder}
+                  onEnter={validateAndAdvance}
+                  error={errors._name}
+                  autoFocus={idx === currentQuestion}
+                />
+              ) : q.type === "textarea" ? (
+                <TypeformTextarea
+                  value={answers[q.id] || ""}
+                  onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                  placeholder={q.placeholder}
+                  rows={q.rows}
+                  onSubmit={validateAndAdvance}
+                  error={errors[q.id]}
+                  autoFocus={idx === currentQuestion}
+                />
+              ) : q.type === "radio" && q.options ? (
+                <TypeformRadioGroup
+                  options={q.options}
+                  value={answers[q.id] || ""}
+                  onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                  onSelect={validateAndAdvance}
+                  error={errors[q.id]}
+                />
+              ) : (
+                <TypeformTextInput
+                  value={answers[q.id] || ""}
+                  onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                  placeholder={q.placeholder}
+                  onEnter={validateAndAdvance}
+                  error={errors[q.id]}
+                  autoFocus={idx === currentQuestion}
+                />
+              )}
+            </TypeformQuestion>
+          ))}
+        </div>
+
+        {/* Submit button on last question */}
+        {currentQuestion === totalQuestions - 1 && (
+          <div className="mt-8">
+            <button
+              onClick={validateAndAdvance}
+              disabled={isSubmitting}
+              className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? "Saving..." : "Submit Worksheet"}
+            </button>
+          </div>
+        )}
+      </TypeformLayout>
+    );
+  }
+
+  return null;
 }
