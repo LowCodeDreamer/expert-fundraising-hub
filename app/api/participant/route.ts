@@ -4,9 +4,10 @@ import { createServiceClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");
 
-  if (!email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
     return NextResponse.json(
-      { error: "email query parameter is required" },
+      { error: "A valid email address is required" },
       { status: 400 }
     );
   }

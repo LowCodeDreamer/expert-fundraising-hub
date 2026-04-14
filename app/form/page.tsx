@@ -64,9 +64,10 @@ function FormPageInner() {
 
   // Fetch participant state on mount
   useEffect(() => {
-    if (!email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
       setMode("error");
-      setErrorMessage("No email provided. Please access this form from the course.");
+      setErrorMessage("A valid email address is required. Please access this form from the course.");
       return;
     }
 
