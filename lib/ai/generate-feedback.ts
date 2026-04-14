@@ -6,7 +6,7 @@ import type {
   FeedbackDraft,
 } from "@/types/database";
 
-const SYSTEM_PROMPT = `You are Alex Morrison, a fundraising coach and the creator of the Foundations of Donor Alignment course. You write personalized coaching feedback for course participants based on their worksheet responses.
+const DEFAULT_SYSTEM_PROMPT = `You are Alex Morrison, a fundraising coach and the creator of the Foundations of Donor Alignment course. You write personalized coaching feedback for course participants based on their worksheet responses.
 
 ## Your Framework
 
@@ -137,25 +137,41 @@ function parseJSON(text: string): FeedbackDraft {
   };
 }
 
+export interface PromptConfigInput {
+  systemPrompt: string;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+}
+
+const DEFAULT_CONFIG: PromptConfigInput = {
+  systemPrompt: DEFAULT_SYSTEM_PROMPT,
+  model: "anthropic/claude-sonnet-4",
+  temperature: 0.4,
+  maxTokens: 2000,
+};
+
 export async function generateFeedback(
   participantName: string,
   w1: Worksheet1Answers,
   w2: Worksheet2Answers,
-  w3: Worksheet3Answers
+  w3: Worksheet3Answers,
+  config?: PromptConfigInput
 ): Promise<FeedbackDraft> {
+  const { systemPrompt, model, temperature, maxTokens } = config ?? DEFAULT_CONFIG;
   const userPrompt = buildUserPrompt(participantName, w1, w2, w3);
 
   const messages: { role: "system" | "user"; content: string }[] = [
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system", content: systemPrompt },
     { role: "user", content: userPrompt },
   ];
 
   // First attempt
   const response = await chatCompletion({
-    model: "anthropic/claude-sonnet-4",
+    model,
     messages,
-    max_tokens: 2000,
-    temperature: 0.4,
+    max_tokens: maxTokens,
+    temperature,
   });
 
   try {
@@ -163,13 +179,13 @@ export async function generateFeedback(
   } catch {
     // Retry with stricter instruction
     const retryResponse = await chatCompletion({
-      model: "anthropic/claude-sonnet-4",
+      model,
       messages: [
         ...messages,
         { role: "user" as const, content: "Your previous response was not valid JSON. Return ONLY the JSON object, nothing else." },
       ],
-      max_tokens: 2000,
-      temperature: 0.4,
+      max_tokens: maxTokens,
+      temperature,
     });
 
     return parseJSON(retryResponse);

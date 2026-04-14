@@ -54,6 +54,18 @@ export interface FeedbackDraft {
   worksheet_3: string;
 }
 
+export interface PromptConfig {
+  id: string;
+  version: number;
+  name: string;
+  system_prompt: string;
+  model: string;
+  temperature: number;
+  max_tokens: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface FeedbackJob {
   id: string;
   participant_id: string;

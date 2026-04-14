@@ -1,10 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 export function AdminHeader() {
   const router = useRouter();
+  const pathname = usePathname();
 
   async function handleLogout() {
     document.cookie =
@@ -15,13 +17,37 @@ export function AdminHeader() {
   return (
     <header className="bg-card">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <div>
-          <h1 className="text-xl font-heading font-semibold text-foreground">
-            Donor Alignment Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Review and manage participant feedback
-          </p>
+        <div className="flex items-center gap-8">
+          <div>
+            <h1 className="text-xl font-heading font-semibold text-foreground">
+              Donor Alignment Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Review and manage participant feedback
+            </p>
+          </div>
+          <nav className="flex items-center gap-4">
+            <Link
+              href="/admin"
+              className={`text-sm font-medium transition-colors hover:text-foreground ${
+                pathname === "/admin"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Participants
+            </Link>
+            <Link
+              href="/admin/prompts"
+              className={`text-sm font-medium transition-colors hover:text-foreground ${
+                pathname === "/admin/prompts"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Prompts
+            </Link>
+          </nav>
         </div>
         <Button variant="outline" size="sm" onClick={handleLogout}>
           Logout

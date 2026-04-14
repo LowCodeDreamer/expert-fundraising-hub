@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { generateFeedback } from "@/lib/ai/generate-feedback";
+import type { PromptConfigInput } from "@/lib/ai/generate-feedback";
 import type {
   Worksheet1Answers,
   Worksheet2Answers,
   Worksheet3Answers,
+  PromptConfig,
 } from "@/types/database";
 
 export const maxDuration = 60;
@@ -50,8 +52,25 @@ export async function POST(request: Request) {
     const w3 = submissions.find((s) => s.worksheet_number === 3)
       ?.answers as Worksheet3Answers;
 
+    // Fetch active prompt config
+    let promptConfig: PromptConfigInput | undefined;
+    const { data: activeConfig } = await supabase
+      .from("prompt_configs")
+      .select("*")
+      .eq("is_active", true)
+      .single<PromptConfig>();
+
+    if (activeConfig) {
+      promptConfig = {
+        systemPrompt: activeConfig.system_prompt,
+        model: activeConfig.model,
+        temperature: activeConfig.temperature,
+        maxTokens: activeConfig.max_tokens,
+      };
+    }
+
     // Generate feedback
-    const draft = await generateFeedback(participant.name, w1, w2, w3);
+    const draft = await generateFeedback(participant.name, w1, w2, w3, promptConfig);
 
     // Save draft and set status
     await supabase
