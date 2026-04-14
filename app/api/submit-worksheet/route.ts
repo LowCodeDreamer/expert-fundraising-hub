@@ -55,27 +55,46 @@ export async function POST(request: Request) {
 
     const supabase = createServiceClient();
 
-    // Upsert participant by email
-    const participantData: Record<string, unknown> = {
-      email,
-      course_started_at: new Date().toISOString(),
-    };
-    if (name) {
-      participantData.name = name;
-    }
-
-    const { data: participant, error: participantError } = await supabase
+    // Look up existing participant first
+    const { data: existing } = await supabase
       .from("participants")
-      .upsert(participantData, { onConflict: "email" })
       .select("id")
+      .eq("email", email)
       .single();
 
-    if (participantError || !participant) {
-      return NextResponse.json(
-        { error: "Failed to save participant" },
-        { status: 500 }
-      );
+    let participantId: string;
+
+    if (existing) {
+      // Update name if provided
+      if (name) {
+        await supabase
+          .from("participants")
+          .update({ name })
+          .eq("id", existing.id);
+      }
+      participantId = existing.id;
+    } else {
+      // New participant — name required (comes from worksheet 1)
+      const { data: created, error: createError } = await supabase
+        .from("participants")
+        .insert({
+          email,
+          name: name || email.split("@")[0],
+          course_started_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+
+      if (createError || !created) {
+        return NextResponse.json(
+          { error: "Failed to save participant" },
+          { status: 500 }
+        );
+      }
+      participantId = created.id;
     }
+
+    const participant = { id: participantId };
 
     // Upsert worksheet submission
     const { error: wsError } = await supabase
