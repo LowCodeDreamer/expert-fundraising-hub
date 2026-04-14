@@ -45,7 +45,8 @@ export default function AdminLoginPage() {
             <h1 className="text-2xl font-heading font-semibold text-foreground">
               Admin Login
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <div className="mx-auto mt-2 h-0.5 w-12 bg-accent rounded-full" />
+            <p className="mt-2 text-sm text-muted-foreground">
               Foundations of Donor Alignment
             </p>
           </div>

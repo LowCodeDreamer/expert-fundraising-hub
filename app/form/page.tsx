@@ -138,7 +138,8 @@ export default function FormPage() {
           <h1 className="text-3xl font-heading font-bold text-foreground tracking-tight">
             Foundations of Donor Alignment
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <div className="mx-auto mt-3 h-0.5 w-16 bg-accent rounded-full" />
+          <p className="mt-3 text-muted-foreground">
             Complete all three worksheets to receive your personalized coaching
             feedback.
           </p>

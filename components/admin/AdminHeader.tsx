@@ -13,7 +13,7 @@ export function AdminHeader() {
   }
 
   return (
-    <header className="border-b border-border bg-card">
+    <header className="bg-card">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div>
           <h1 className="text-xl font-heading font-semibold text-foreground">
@@ -27,6 +27,7 @@ export function AdminHeader() {
           Logout
         </Button>
       </div>
+      <div className="h-0.5 bg-accent" />
     </header>
   );
 }

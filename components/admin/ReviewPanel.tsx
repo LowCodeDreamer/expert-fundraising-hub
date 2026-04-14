@@ -219,7 +219,7 @@ export function ReviewPanel({
                 <button
                   type="button"
                   onClick={() => resetSection("worksheet_1")}
-                  className="text-xs text-primary hover:underline"
+                  className="text-xs text-accent-foreground/60 hover:text-accent hover:underline"
                 >
                   Reset to AI draft
                 </button>
@@ -265,7 +265,7 @@ export function ReviewPanel({
                 <button
                   type="button"
                   onClick={() => resetSection("worksheet_2")}
-                  className="text-xs text-primary hover:underline"
+                  className="text-xs text-accent-foreground/60 hover:text-accent hover:underline"
                 >
                   Reset to AI draft
                 </button>
@@ -311,7 +311,7 @@ export function ReviewPanel({
                 <button
                   type="button"
                   onClick={() => resetSection("worksheet_3")}
-                  className="text-xs text-primary hover:underline"
+                  className="text-xs text-accent-foreground/60 hover:text-accent hover:underline"
                 >
                   Reset to AI draft
                 </button>

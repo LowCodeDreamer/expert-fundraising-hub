@@ -55,39 +55,39 @@
 }
 
 :root {
-  /* PRD Palette: warm off-white bg, deep charcoal text, forest green accent */
-  --background: oklch(0.979 0.004 83.6);     /* #FAF8F5 */
-  --foreground: oklch(0.208 0.002 286);       /* #1C1C1E */
-  --card: oklch(0.993 0.002 90);              /* slightly lighter than bg */
-  --card-foreground: oklch(0.208 0.002 286);  /* #1C1C1E */
-  --popover: oklch(0.993 0.002 90);
-  --popover-foreground: oklch(0.208 0.002 286);
-  --primary: oklch(0.445 0.065 170);          /* #2D6A5F forest green */
-  --primary-foreground: oklch(0.985 0.002 90);
-  --secondary: oklch(0.919 0.006 73);         /* #E8E4DF warm gray */
-  --secondary-foreground: oklch(0.308 0.005 286);
-  --muted: oklch(0.945 0.005 73);
-  --muted-foreground: oklch(0.48 0.01 250);
-  --accent: oklch(0.919 0.006 73);
-  --accent-foreground: oklch(0.308 0.005 286);
+  /* Expert Fundraising palette: navy blue + gold accent */
+  --background: oklch(0.99 0.001 90);         /* #FEFEFE near-white */
+  --foreground: oklch(0.22 0.03 265);         /* #1E3264 navy for text */
+  --card: oklch(1 0 0);                       /* pure white */
+  --card-foreground: oklch(0.22 0.03 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.03 265);
+  --primary: oklch(0.30 0.07 265);            /* #1E3264 navy blue */
+  --primary-foreground: oklch(0.99 0.001 90);
+  --secondary: oklch(0.94 0.005 80);          /* light warm gray */
+  --secondary-foreground: oklch(0.30 0.03 265);
+  --muted: oklch(0.96 0.004 80);
+  --muted-foreground: oklch(0.50 0.02 260);
+  --accent: oklch(0.76 0.12 85);              /* #C8A84E gold */
+  --accent-foreground: oklch(0.22 0.03 265);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.919 0.006 73);            /* #E8E4DF */
-  --input: oklch(0.919 0.006 73);
-  --ring: oklch(0.445 0.065 170);             /* matches primary */
-  --chart-1: oklch(0.445 0.065 170);
-  --chart-2: oklch(0.795 0.16 75);
+  --border: oklch(0.92 0.005 80);
+  --input: oklch(0.92 0.005 80);
+  --ring: oklch(0.76 0.12 85);               /* gold ring */
+  --chart-1: oklch(0.30 0.07 265);
+  --chart-2: oklch(0.76 0.12 85);
   --chart-3: oklch(0.55 0.15 250);
   --chart-4: oklch(0.55 0.15 155);
   --chart-5: oklch(0.577 0.245 27.325);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.979 0.004 83.6);
-  --sidebar-foreground: oklch(0.208 0.002 286);
-  --sidebar-primary: oklch(0.445 0.065 170);
-  --sidebar-primary-foreground: oklch(0.985 0.002 90);
-  --sidebar-accent: oklch(0.945 0.005 73);
-  --sidebar-accent-foreground: oklch(0.308 0.005 286);
-  --sidebar-border: oklch(0.919 0.006 73);
-  --sidebar-ring: oklch(0.445 0.065 170);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.99 0.001 90);
+  --sidebar-foreground: oklch(0.22 0.03 265);
+  --sidebar-primary: oklch(0.30 0.07 265);
+  --sidebar-primary-foreground: oklch(0.99 0.001 90);
+  --sidebar-accent: oklch(0.96 0.004 80);
+  --sidebar-accent-foreground: oklch(0.30 0.03 265);
+  --sidebar-border: oklch(0.92 0.005 80);
+  --sidebar-ring: oklch(0.76 0.12 85);
 }
 
 @layer base {
