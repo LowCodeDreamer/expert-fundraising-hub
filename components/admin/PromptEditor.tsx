@@ -11,7 +11,13 @@ import type { PromptConfig } from "@/types/database";
 const MODEL_OPTIONS = [
   "anthropic/claude-sonnet-4",
   "anthropic/claude-sonnet-4.5",
+  "anthropic/claude-opus-4",
+  "anthropic/claude-opus-4.6",
   "anthropic/claude-haiku-4.5",
+  "google/gemini-2.5-pro",
+  "google/gemini-2.5-flash",
+  "openai/gpt-4.1",
+  "openai/o3",
 ];
 
 export function PromptEditor() {
