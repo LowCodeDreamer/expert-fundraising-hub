@@ -31,7 +31,6 @@ export function TypeformTextInput({ value, onChange, placeholder, type = "text",
         className="w-full bg-transparent border-0 border-b-2 border-border focus:border-accent outline-none text-2xl text-foreground placeholder:text-muted-foreground/50 py-2 transition-colors font-sans"
       />
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <p className="text-xs text-muted-foreground mt-3">Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">Enter ↵</kbd> to continue</p>
     </div>
   );
 }

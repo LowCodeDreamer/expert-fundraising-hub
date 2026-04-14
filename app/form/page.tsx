@@ -225,6 +225,21 @@ function FormPageInner() {
     }
   }
 
+  // Clear field-specific error on change
+  function handleNameChange(v: string) {
+    setName(v);
+    if (errors._name) {
+      setErrors((prev) => { const next = { ...prev }; delete next._name; return next; });
+    }
+  }
+
+  function handleAnswerChange(questionId: string, v: string) {
+    setAnswers((prev) => ({ ...prev, [questionId]: v }));
+    if (errors[questionId]) {
+      setErrors((prev) => { const next = { ...prev }; delete next[questionId]; return next; });
+    }
+  }
+
   // --- Render ---
 
   if (mode === "loading") {
@@ -247,7 +262,17 @@ function FormPageInner() {
   }
 
   if (mode === "complete") {
-    return <WorksheetComplete worksheetNumber={worksheetNumber} name={name || undefined} />;
+    return (
+      <WorksheetComplete
+        worksheetNumber={worksheetNumber}
+        name={name || undefined}
+        email={email}
+        completedWorksheets={[
+          ...(participant?.completedWorksheets || []),
+          ...(!(participant?.completedWorksheets || []).includes(worksheetNumber) ? [worksheetNumber] : []),
+        ]}
+      />
+    );
   }
 
   if (mode === "review" && worksheet) {
@@ -265,6 +290,7 @@ function FormPageInner() {
   if (mode === "typeform" && worksheet) {
     const questions = buildQuestions(worksheet);
     const totalQuestions = questions.length;
+    const isLastQuestion = currentQuestion === totalQuestions - 1;
 
     return (
       <TypeformLayout
@@ -294,7 +320,7 @@ function FormPageInner() {
               {q.id === "_name" ? (
                 <TypeformTextInput
                   value={name}
-                  onChange={setName}
+                  onChange={handleNameChange}
                   placeholder={q.placeholder}
                   onEnter={validateAndAdvance}
                   error={errors._name}
@@ -303,10 +329,9 @@ function FormPageInner() {
               ) : q.type === "textarea" ? (
                 <TypeformTextarea
                   value={answers[q.id] || ""}
-                  onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                  onChange={(v) => handleAnswerChange(q.id, v)}
                   placeholder={q.placeholder}
                   rows={q.rows}
-                  onSubmit={validateAndAdvance}
                   error={errors[q.id]}
                   autoFocus={idx === currentQuestion}
                 />
@@ -314,14 +339,13 @@ function FormPageInner() {
                 <TypeformRadioGroup
                   options={q.options}
                   value={answers[q.id] || ""}
-                  onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
-                  onSelect={validateAndAdvance}
+                  onChange={(v) => handleAnswerChange(q.id, v)}
                   error={errors[q.id]}
                 />
               ) : (
                 <TypeformTextInput
                   value={answers[q.id] || ""}
-                  onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                  onChange={(v) => handleAnswerChange(q.id, v)}
                   placeholder={q.placeholder}
                   onEnter={validateAndAdvance}
                   error={errors[q.id]}
@@ -332,18 +356,16 @@ function FormPageInner() {
           ))}
         </div>
 
-        {/* Submit button on last question */}
-        {currentQuestion === totalQuestions - 1 && (
-          <div className="mt-8">
-            <button
-              onClick={validateAndAdvance}
-              disabled={isSubmitting}
-              className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              {isSubmitting ? "Saving..." : "Submit Worksheet"}
-            </button>
-          </div>
-        )}
+        {/* Next / Submit button on every question */}
+        <div className="mt-8">
+          <button
+            onClick={validateAndAdvance}
+            disabled={isSubmitting}
+            className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving..." : isLastQuestion ? "Submit Worksheet" : "Next"}
+          </button>
+        </div>
       </TypeformLayout>
     );
   }
