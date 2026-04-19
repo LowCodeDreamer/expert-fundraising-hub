@@ -174,7 +174,7 @@ export async function generateFeedback(
   ];
 
   const reasoning = thinkingEnabled
-    ? { effort: "high" as const, max_tokens: thinkingBudget ?? 10000 }
+    ? { max_tokens: thinkingBudget ?? 10000 }
     : undefined;
 
   // First attempt

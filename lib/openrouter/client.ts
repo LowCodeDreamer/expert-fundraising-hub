@@ -9,7 +9,6 @@ interface ChatCompletionOptions {
   max_tokens: number;
   temperature: number;
   reasoning?: {
-    effort: "low" | "medium" | "high";
     max_tokens: number;
   };
 }
