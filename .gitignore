@@ -17,6 +17,12 @@ build/
 
 # Vercel
 .vercel
+.env.vercel-check
+
+# Local agent / MCP tooling — contains secrets and machine-specific paths
+.mcp.json
+.agents/
+skills-lock.json
 
 # OS
 .DS_Store
