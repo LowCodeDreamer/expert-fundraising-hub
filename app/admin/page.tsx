@@ -14,6 +14,7 @@ interface ParticipantRow {
   days_since_start: number;
   status: FeedbackStatus;
   error_message: string | null;
+  job_updated_at: string | null;
 }
 
 export default async function AdminDashboard() {
@@ -46,7 +47,7 @@ export default async function AdminDashboard() {
 
       const { data: job } = await supabase
         .from("feedback_jobs")
-        .select("status, error_message")
+        .select("status, error_message, updated_at")
         .eq("participant_id", p.id)
         .single();
 
@@ -73,6 +74,7 @@ export default async function AdminDashboard() {
         days_since_start: daysSinceStart,
         status: (job?.status as FeedbackStatus) || "pending",
         error_message: job?.error_message || null,
+        job_updated_at: job?.updated_at || null,
       };
     })
   );

@@ -24,6 +24,14 @@ interface ParticipantRow {
   days_since_start: number;
   status: FeedbackStatus;
   error_message: string | null;
+  job_updated_at: string | null;
+}
+
+const STUCK_GENERATING_MS = 90_000;
+
+function isStuckGenerating(row: ParticipantRow): boolean {
+  if (row.status !== "generating" || !row.job_updated_at) return false;
+  return Date.now() - new Date(row.job_updated_at).getTime() > STUCK_GENERATING_MS;
 }
 
 interface ParticipantTableProps {
@@ -320,6 +328,15 @@ export function ParticipantTable({
                           onClick={() => handleGenerate(p.id)}
                         >
                           Generate
+                        </Button>
+                      )}
+                      {isStuckGenerating(p) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleGenerate(p.id)}
+                        >
+                          Retry
                         </Button>
                       )}
                       {(p.status === "draft" || p.status === "approved") && (
