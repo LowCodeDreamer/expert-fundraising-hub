@@ -37,7 +37,9 @@ function FormPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const email = searchParams.get("email") || "";
+  // `+` in a query string decodes to a space, which mangles Gmail-style
+  // plus-tagged addresses. Since literal spaces aren't valid in email, repair.
+  const email = (searchParams.get("email") || "").replace(/ /g, "+");
   const worksheetParam = parseInt(searchParams.get("worksheet") || "1", 10);
   const worksheetNumber = ([1, 2, 3].includes(worksheetParam) ? worksheetParam : 1) as 1 | 2 | 3;
 
