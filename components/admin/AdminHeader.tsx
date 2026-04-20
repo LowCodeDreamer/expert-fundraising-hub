@@ -48,6 +48,16 @@ export function AdminHeader() {
               Prompts
             </Link>
             <Link
+              href="/admin/pdf-template"
+              className={`text-sm font-medium transition-colors hover:text-foreground ${
+                pathname === "/admin/pdf-template"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              PDF Template
+            </Link>
+            <Link
               href="/admin/settings"
               className={`text-sm font-medium transition-colors hover:text-foreground ${
                 pathname === "/admin/settings"

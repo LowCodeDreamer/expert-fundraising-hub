@@ -88,3 +88,20 @@ export interface AppSettings {
   value: unknown;
   updated_at: string;
 }
+
+export interface PdfTemplateConfig {
+  id: string;
+  version: number;
+  name: string;
+  cover_title: string;
+  intro_paragraph: string;
+  worksheet_1_heading: string;
+  worksheet_2_heading: string;
+  worksheet_3_heading: string;
+  closing_paragraph: string;
+  signature_block: string;
+  accent_color: string;
+  logo_url: string | null;
+  is_active: boolean;
+  created_at: string;
+}
