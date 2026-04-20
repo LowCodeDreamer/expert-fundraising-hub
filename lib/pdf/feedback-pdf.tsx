@@ -100,7 +100,8 @@ function makeStyles(accent: string) {
       paddingBottom: 16,
     },
     logo: {
-      width: 140,
+      width: 280,
+      alignSelf: "center",
       marginBottom: 12,
     },
     coverTitle: {
@@ -257,8 +258,11 @@ export function FeedbackDocument({
     >
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
-          {logoSrc && <Image src={logoSrc} style={styles.logo} />}
-          <Text style={styles.coverTitle}>{template.cover_title}</Text>
+          {logoSrc ? (
+            <Image src={logoSrc} style={styles.logo} />
+          ) : (
+            <Text style={styles.coverTitle}>{template.cover_title}</Text>
+          )}
         </View>
 
         <Paragraphs text={template.intro_paragraph} style={styles.paragraph} />
