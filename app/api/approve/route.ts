@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServiceClient } from "@/lib/supabase/server";
+import { renderFeedbackPdf } from "@/lib/pdf/render";
+import { DEFAULT_PDF_TEMPLATE } from "@/lib/pdf/feedback-pdf";
 import type {
   Worksheet1Answers,
   Worksheet2Answers,
   Worksheet3Answers,
   FeedbackDraft,
+  PdfTemplateConfig,
 } from "@/types/database";
+
+// Rendering the PDF + POSTing to n8n should easily fit; keep headroom.
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
@@ -48,18 +54,33 @@ export async function POST(request: Request) {
   const webhookSecret = process.env.N8N_CALLBACK_SECRET;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-  if (webhookUrl && webhookSecret && appUrl) {
-    triggerDelivery({
+  if (!webhookUrl || !webhookSecret || !appUrl) {
+    console.warn("Delivery webhook env vars missing; skipping n8n dispatch");
+    return NextResponse.json({ success: true, delivery: "skipped" });
+  }
+
+  try {
+    await triggerDelivery({
       supabase,
       participantId,
       humanEdit: humanEdit as FeedbackDraft,
       webhookUrl,
       webhookSecret,
       callbackUrl: `${appUrl}/api/delivery-callback`,
-    }).catch((e) => console.error("Delivery trigger failed:", e));
-  } else {
-    console.warn(
-      "Delivery webhook env vars missing; skipping n8n dispatch"
+    });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Delivery trigger failed";
+    console.error("Delivery trigger failed:", e);
+    await supabase
+      .from("feedback_jobs")
+      .update({
+        error_message: message,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("participant_id", participantId);
+    return NextResponse.json(
+      { success: true, delivery: "failed", error: message },
+      { status: 200 }
     );
   }
 
@@ -97,21 +118,34 @@ async function triggerDelivery(params: {
   const w2 = submissions.find((s) => s.worksheet_number === 2)?.answers as Worksheet2Answers;
   const w3 = submissions.find((s) => s.worksheet_number === 3)?.answers as Worksheet3Answers;
 
-  const payload = {
-    participantId,
-    participantName: participant.name,
-    participantEmail: participant.email,
-    callbackUrl,
+  // Active PDF template (admin-editable copy + colors). Falls back to the
+  // built-in defaults if no row exists — same escape hatch pattern as the AI prompt.
+  const { data: activeTemplate } = await supabase
+    .from("pdf_template_configs")
+    .select("*")
+    .eq("is_active", true)
+    .maybeSingle<PdfTemplateConfig>();
+
+  const template = activeTemplate ?? DEFAULT_PDF_TEMPLATE;
+
+  const pdfBuffer = await renderFeedbackPdf({
+    participant: { name: participant.name },
     feedback: {
       worksheet_1: humanEdit.worksheet_1,
       worksheet_2: humanEdit.worksheet_2,
       worksheet_3: humanEdit.worksheet_3,
     },
-    answers: {
-      worksheet_1: w1,
-      worksheet_2: w2,
-      worksheet_3: w3,
-    },
+    answers: { worksheet_1: w1, worksheet_2: w2, worksheet_3: w3 },
+    template,
+  });
+
+  const payload = {
+    participantId,
+    participantName: participant.name,
+    participantEmail: participant.email,
+    callbackUrl,
+    pdfBase64: pdfBuffer.toString("base64"),
+    pdfFilename: `Donor Alignment Feedback — ${participant.name}.pdf`,
   };
 
   const res = await fetch(webhookUrl, {

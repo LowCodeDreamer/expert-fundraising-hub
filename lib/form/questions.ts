@@ -54,3 +54,32 @@ export const WORKSHEETS: WorksheetConfig[] = [
 export function getWorksheetByNumber(n: number): WorksheetConfig | undefined {
   return WORKSHEETS.find((w) => w.number === n);
 }
+
+// Short-form question labels used in admin review UI and delivered PDF.
+// Kept here so both stay in sync.
+import type {
+  Worksheet1Answers,
+  Worksheet2Answers,
+  Worksheet3Answers,
+} from "@/types/database";
+
+export const w1QuestionLabels: Record<keyof Worksheet1Answers, string> = {
+  q1_working:
+    "What's working in your current donor relationships or fundraising approach?",
+  q2_stuck: "What feels stuck or unclear?",
+};
+
+export const w2QuestionLabels: Record<keyof Worksheet2Answers, string> = {
+  q1_led_with: "Did you lead with Impact or Outputs?",
+  q2_impact_statement: "The impact we exist to create in the world is...",
+  q3_mindset: "How you feel when asking for money",
+  q4_limiting_belief: "Limiting belief about money, wealth, or asking",
+  q5_donor_list: "Written donor prospect list status",
+  q6_meeting_prep: "How you prepare for a donor meeting",
+};
+
+export const w3QuestionLabels: Record<keyof Worksheet3Answers, string> = {
+  q1_donor_center: "Which center was the donor in?",
+  q2_breakdown: "Where the conversation broke down or could have gone deeper",
+  q3_redo: "What you would do differently",
+};

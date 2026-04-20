@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,14 @@ type SortDir = "asc" | "desc";
 const needsActionStatuses: FeedbackStatus[] = ["pending", "generating", "draft"];
 const reviewedStatuses: FeedbackStatus[] = ["approved", "sent"];
 
+function needsAction(row: ParticipantRow): boolean {
+  return Boolean(row.error_message) || needsActionStatuses.includes(row.status);
+}
+
+function isReviewed(row: ParticipantRow): boolean {
+  return !row.error_message && reviewedStatuses.includes(row.status);
+}
+
 const statusOrder: Record<FeedbackStatus, number> = {
   pending: 0,
   generating: 1,
@@ -64,8 +73,10 @@ const statusOrder: Record<FeedbackStatus, number> = {
 export function ParticipantTable({
   participants: initialParticipants,
 }: ParticipantTableProps) {
+  const router = useRouter();
   const [participants, setParticipants] = useState(initialParticipants);
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<FilterTab>("needs_action");
   const [sortField, setSortField] = useState<SortField>("submitted_at");
@@ -121,11 +132,63 @@ export function ParticipantTable({
     if (res.ok) {
       setParticipants((prev) =>
         prev.map((p) =>
-          p.id === participantId ? { ...p, status: "generating" } : p
+          p.id === participantId
+            ? { ...p, status: "generating", error_message: null }
+            : p
         )
       );
       setGeneratingIds((prev) => new Set(prev).add(participantId));
     }
+  }
+
+  function markBusy(id: string, busy: boolean) {
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      if (busy) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  async function handleReset(participantId: string) {
+    markBusy(participantId, true);
+    const res = await fetch("/api/admin/reset-job", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantId }),
+    });
+    if (res.ok) {
+      setParticipants((prev) =>
+        prev.map((p) =>
+          p.id === participantId
+            ? { ...p, status: "pending", error_message: null }
+            : p
+        )
+      );
+      router.refresh();
+    }
+    markBusy(participantId, false);
+  }
+
+  async function handleRemove(participantId: string, name: string) {
+    if (
+      !window.confirm(
+        `Remove feedback job for ${name}? This deletes the draft and any approval state. Worksheet answers are kept — Generate will start fresh.`
+      )
+    ) {
+      return;
+    }
+    markBusy(participantId, true);
+    const res = await fetch("/api/admin/remove-job", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantId }),
+    });
+    if (res.ok) {
+      setParticipants((prev) => prev.filter((p) => p.id !== participantId));
+      router.refresh();
+    }
+    markBusy(participantId, false);
   }
 
   function handleSort(field: SortField) {
@@ -140,11 +203,11 @@ export function ParticipantTable({
   const filtered = useMemo(() => {
     let rows = participants;
 
-    // Tab filter
+    // Tab filter — error rows always live in Needs Action, regardless of status
     if (tab === "needs_action") {
-      rows = rows.filter((p) => needsActionStatuses.includes(p.status));
+      rows = rows.filter(needsAction);
     } else if (tab === "reviewed") {
-      rows = rows.filter((p) => reviewedStatuses.includes(p.status));
+      rows = rows.filter(isReviewed);
     }
 
     // Search
@@ -183,12 +246,12 @@ export function ParticipantTable({
     {
       key: "needs_action",
       label: "Needs Action",
-      count: participants.filter((p) => needsActionStatuses.includes(p.status)).length,
+      count: participants.filter(needsAction).length,
     },
     {
       key: "reviewed",
       label: "Reviewed",
-      count: participants.filter((p) => reviewedStatuses.includes(p.status)).length,
+      count: participants.filter(isReviewed).length,
     },
     { key: "all", label: "All", count: participants.length },
   ];
@@ -322,21 +385,25 @@ export function ParticipantTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {p.status === "pending" && p.worksheet_count === 3 && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleGenerate(p.id)}
-                        >
-                          Generate
-                        </Button>
-                      )}
-                      {isStuckGenerating(p) && (
+                      {p.status === "pending" &&
+                        !p.error_message &&
+                        p.worksheet_count === 3 && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleGenerate(p.id)}
+                            disabled={busyIds.has(p.id)}
+                          >
+                            Generate
+                          </Button>
+                        )}
+                      {(isStuckGenerating(p) || p.error_message) && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleGenerate(p.id)}
+                          onClick={() => handleReset(p.id)}
+                          disabled={busyIds.has(p.id)}
                         >
-                          Retry
+                          Reset
                         </Button>
                       )}
                       {(p.status === "draft" || p.status === "approved") && (
@@ -345,6 +412,19 @@ export function ParticipantTable({
                             Review
                           </Button>
                         </Link>
+                      )}
+                      {(p.error_message ||
+                        p.status === "draft" ||
+                        p.status === "approved" ||
+                        p.status === "sent") && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleRemove(p.id, p.name)}
+                          disabled={busyIds.has(p.id)}
+                        >
+                          Remove
+                        </Button>
                       )}
                     </div>
                   </TableCell>
