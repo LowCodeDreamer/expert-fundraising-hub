@@ -52,7 +52,14 @@ if (!supabaseUrl || !serviceKey) {
 
 const supabase = createClient(supabaseUrl!, serviceKey!);
 
-type PersonaKey = "default" | "maria_chen" | "james_ochieng" | "sarah_thompson";
+type PersonaKey =
+  | "default"
+  | "maria_chen"
+  | "james_ochieng"
+  | "sarah_thompson"
+  | "david_kim"
+  | "elena_vasquez"
+  | "marcus_johnson";
 
 interface PersonaData {
   defaultName: string;
@@ -208,6 +215,120 @@ const PERSONAS: Record<PersonaKey, PersonaData> = {
         "Your impact statement has the right bones — 'dignity restored, not services provided' is the voice. The apologetic mindset is where the meeting leaks. Apology telegraphs to the donor that you don't fully believe in what you're asking for. When you walk in as a peer offering an invitation — not as someone imposing — the energy in the room is different, and your friend feels it. What would it sound like to name the gift amount calmly, without softening it?",
       worksheet_3:
         "You read him correctly — he was in Head, asking operational questions. The mistake wasn't yours; it was a role mismatch. Board members don't need to be the operational expert. They need to be the bridge — the one who says 'that's a great question, let me get our ED and housing director on a call with you next week.' That hand-off is itself a trust signal. How will this awareness prepare you for your next donor meeting?",
+    },
+  },
+
+  // Development Director at a larger shop. Strong on framework, frozen at
+  // the ask. Cerebral donor walked away because trust was never established.
+  david_kim: {
+    defaultName: "David Kim",
+    w1: {
+      q1_working:
+        "I build rapport quickly and I can talk about our work with real depth — donors trust me to tell them the truth, including when we've failed.",
+      q2_stuck:
+        "I get to the moment of the ask and I reroute. I'll ask if 'there's a way they could see themselves getting involved' instead of naming an amount. Nobody has ever complained, but nobody's making a major gift either.",
+    },
+    w2: {
+      q1_led_with: "Impact",
+      q2_impact_statement:
+        "We exist so that every child in our city's foster system has a stable, trained adult in their life from day one — ending the silent epidemic of kids aging out alone.",
+      q3_mindset: "I avoid asking altogether",
+      q4_limiting_belief:
+        "If I ask for a specific amount I'm pricing the relationship — and I'll find out what our work is actually worth to them.",
+      q5_donor_list: "I have a list but it's incomplete",
+      q6_meeting_prep:
+        "Heavy external prep — giving history, program notes, three stories rehearsed. Almost no internal prep. I just push through the anxiety.",
+    },
+    w3: {
+      q1_donor_center: "Head",
+      q2_breakdown:
+        "He asked how we compared to two other organizations in the space. I had reasonable answers but I could feel myself reaching for impressiveness instead of clarity. He thanked me for my time and said he'd 'reflect.' I never followed up because I couldn't tell what he was actually asking for.",
+      q3_redo:
+        "I'd have asked him what was driving the comparison — whether he was stuck between us or genuinely exploring. That question alone would've told me what he needed from me.",
+    },
+    feedback: {
+      worksheet_1:
+        "The trust you build is real — donors telling you their truth is not a small thing. The rerouting at the ask is the clearest pattern in what you wrote, and the phrase 'a way they could see themselves getting involved' is doing a lot of work to protect you from a specific answer. What you're avoiding isn't the ask; it's the information a real ask would give you. What are you actually afraid of learning?",
+      worksheet_2:
+        "Your impact statement has force — it names a specific wrong and places the donor inside the repair. Hold that. The belief you named — that a specific ask 'prices the relationship' — is the thing quietly running your meetings. A clear number isn't a price tag; it's an invitation with a specific shape. Try this in your next meeting: write down the amount you'd ask for before you walk in. Not to pressure yourself — just to see what comes up.",
+      worksheet_3:
+        "He was in Head, comparing options — which means he was already treating you as a serious candidate. The reach for impressiveness pulled you out of yourself. He didn't need a better answer about the comparison; he needed you to be grounded enough to ask him what he was really deciding. That's the trust signal he was looking for, and you had it in you to give. How will this awareness prepare you for your next donor meeting?",
+    },
+  },
+
+  // Founding ED. Tremendous messenger, no machine. Relies on story + charisma,
+  // which works until she forgets who she already spoke to.
+  elena_vasquez: {
+    defaultName: "Elena Vasquez",
+    w1: {
+      q1_working:
+        "I can bring a donor into our work in twenty minutes. They meet the women in our program, they feel the weight of what we do, and the ones who say yes say yes fast.",
+      q2_stuck:
+        "I rely on my memory and it's failing me. I've double-pitched the same donor twice, forgotten who introduced me to whom, and I've lost two meaningful prospects in the last year because I didn't follow up in time.",
+    },
+    w2: {
+      q1_led_with: "Impact",
+      q2_impact_statement:
+        "We exist so that women leaving our program have the economic independence to never need it again — breaking the cycle in one generation instead of three.",
+      q3_mindset: "Confident and grounded",
+      q4_limiting_belief:
+        "Systems and lists are for organizations without a real story. Ours speaks for itself.",
+      q5_donor_list: "No list",
+      q6_meeting_prep:
+        "I think about the donor on my drive over. I let the meeting unfold. I've never written a meeting plan.",
+    },
+    w3: {
+      q1_donor_center: "Heart",
+      q2_breakdown:
+        "She loved the story. She wept. I made the ask and she said yes — for an amount I could tell she'd figured out on her own, not something I'd named. I think I left a much larger gift on the table because I didn't know her capacity and I didn't want to name a number that felt arbitrary.",
+      q3_redo:
+        "I'd have actually researched her before the meeting — giving history elsewhere, board affiliations, real estate. I'd have had a number in mind grounded in her capacity, not my hope.",
+    },
+    feedback: {
+      worksheet_1:
+        "The messenger is already the strongest part of your organization. That's not a small thing — most EDs never build it in a lifetime. The gap you're naming is the Machine, and the words 'lost two meaningful prospects' tell you the cost in real dollars. The charisma got you here; it won't get you the next order of magnitude without the scaffolding underneath. What would it feel like to let the system hold the memory so you can hold the relationships?",
+      worksheet_2:
+        "The impact statement is alive — 'one generation instead of three' is exactly the kind of line donors repeat to their spouse over dinner. Hold it. The belief that lists are for organizations without a real story is a founder's belief, and it's the one that caps you. A prospect list doesn't replace the story — it makes sure the story reaches the right people at the right time. What's one meeting this month you'd plan differently if you had a proper list in front of you?",
+      worksheet_3:
+        "Her Heart was wide open — you did the hardest part. The gift you left on the table lived in the Machine, not the Messenger. Knowing her capacity wouldn't have made the ask arbitrary; it would have made it specific. A number grounded in what she can actually give, tied to what she just told you she cared about, is an act of respect — not pressure. How will this awareness prepare you for your next donor meeting?",
+    },
+  },
+
+  // MGO who does most things right on paper, but apologizes at the moment of
+  // truth. Donor was in Hara — he needed certainty, she gave him hedge.
+  marcus_johnson: {
+    defaultName: "Marcus Johnson",
+    w1: {
+      q1_working:
+        "My prep is solid. I have notes on every donor, clear next steps, and I show up knowing what I want from each meeting.",
+      q2_stuck:
+        "The moment I name a number I feel myself shrink. My voice goes up at the end of the sentence like it's a question. Donors who were leaning in lean back.",
+    },
+    w2: {
+      q1_led_with: "Outputs",
+      q2_impact_statement:
+        "We fund direct-service nonprofits across the region so that small organizations doing essential work can focus on the work instead of the fundraising.",
+      q3_mindset: "Apologetic",
+      q4_limiting_belief:
+        "Asking for a large gift is presumptuous — I haven't earned it and neither has the organization.",
+      q5_donor_list: "Yes, a detailed list",
+      q6_meeting_prep:
+        "Full CRM review the day before. I rehearse the ask out loud in the car. The rehearsals are strong. The real thing isn't.",
+    },
+    w3: {
+      q1_donor_center: "Hara",
+      q2_breakdown:
+        "He was testing me. He asked short, sharp questions — 'how long has your director been there,' 'how do you handle attrition,' 'what happens if I give and three months later your numbers dip.' I answered every question accurately but I kept apologizing in the margins. He told me he needed to think about it. I could see him deciding in real time that I wasn't the person to trust with a large gift.",
+      q3_redo:
+        "I'd have matched his energy. Short, clean answers. No hedges. And at the end I would have said the number with the same certainty he was looking for in everything else.",
+    },
+    feedback: {
+      worksheet_1:
+        "Your preparation is the thing most MGOs never do — don't lose that. The shrinking at the ask is the only thing standing between you and the work paying off. 'My voice goes up at the end of the sentence like it's a question' is extraordinarily specific, and it's the whole diagnosis. What belief are you asking the donor to validate in that moment?",
+      worksheet_2:
+        "Leading with outputs — 'we fund direct-service nonprofits' — is a classic messenger-of-a-messenger trap. The impact lives one layer deeper: what changes for the people those nonprofits serve when your funding means the director isn't up until 2 a.m. writing grants? Lead there. The belief about 'presumption' is the thing collapsing your voice at the end of the sentence. You're not presuming; you're inviting. What happens when you stop apologizing for the size of the ask and let it be the size it is?",
+      worksheet_3:
+        "He was entirely in Hara — short questions, no warmth, watching how you held yourself under pressure. You answered the questions correctly, but Hara doesn't grade the answers; it grades the messenger. Every apology in the margins told him you didn't trust yourself, which told him he couldn't either. The repair you named — matching his energy, no hedges, the number stated with certainty — is exactly right. How will this awareness prepare you for your next donor meeting?",
     },
   },
 };
@@ -419,6 +540,9 @@ function parseArgs(argv: string[]): Args {
     "maria_chen",
     "james_ochieng",
     "sarah_thompson",
+    "david_kim",
+    "elena_vasquez",
+    "marcus_johnson",
   ];
   if (out.persona && !validPersonas.includes(out.persona)) {
     fail(`--persona must be one of: ${validPersonas.join(", ")}`);
