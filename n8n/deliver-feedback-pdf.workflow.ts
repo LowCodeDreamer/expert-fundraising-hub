@@ -57,29 +57,16 @@ const decodePdf = node({
       },
     },
   },
-  // convertToFile forwards the input JSON alongside the new binary. Declare
-  // the body so downstream nodes (Gmail, Notify) type-check their $json.body.*
-  // references.
-  output: [
-    {
-      body: {
-        participantId: "00000000-0000-0000-0000-000000000000",
-        participantName: "Jane Fundraiser",
-        participantEmail: "jane@example.com",
-        callbackUrl: "https://example.com/api/delivery-callback",
-        pdfBase64: "JVBERi0xLjMK...",
-        pdfFilename: "Donor Alignment Feedback — Jane Fundraiser.pdf",
-      },
-    },
-  ],
+  // convertToFile's toBinary replaces json with {} and forwards only the
+  // binary — so downstream nodes must use cross-node $("Approval Webhook")
+  // refs to reach body.* fields.
+  output: [{}],
 });
 
-// Send email with PDF attachment. Use $json.body.* (direct input from Decode,
-// which passes the original webhook JSON forward) instead of cross-node
-// $("Approval Webhook") refs. Cross-node refs appear to be unreliable when
-// n8n pauses/resumes an execution — recent production executions have
-// dropped the Gmail dispatch entirely, and the cross-ref is the most likely
-// culprit.
+// Send email with PDF attachment. Must use cross-node $("Approval Webhook")
+// refs because convertToFile's `toBinary` operation replaces `json` with {}
+// and only forwards the binary. Confirmed via exec 27 runtime snapshot:
+// Gmail's input item was `{json: {}, binary: {data: {...}}}`.
 const sendFeedbackEmail = node({
   type: "n8n-nodes-base.gmail",
   version: 2.2,
@@ -89,12 +76,14 @@ const sendFeedbackEmail = node({
     parameters: {
       resource: "message",
       operation: "send",
-      sendTo: expr("{{ $json.body.participantEmail }}"),
+      sendTo: expr(
+        '{{ $("Approval Webhook").item.json.body.participantEmail }}'
+      ),
       subject:
         "Your personalized feedback — Foundations of Donor Alignment",
       emailType: "html",
       message: expr(
-        "Hi {{ $json.body.participantName }},<br><br>" +
+        'Hi {{ $("Approval Webhook").item.json.body.participantName }},<br><br>' +
           "Thank you for completing the <em>Foundations of Donor Alignment</em> course. " +
           "Your personalized feedback from Alex is attached as a PDF.<br><br>" +
           "If you have questions, reply to this email or reach us at support@expertfundraising.org.<br><br>" +
