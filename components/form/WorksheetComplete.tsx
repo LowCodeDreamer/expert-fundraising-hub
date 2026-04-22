@@ -34,7 +34,7 @@ export function WorksheetComplete({ worksheetNumber, name, email, completedWorks
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           {allThreeDone
             ? "You've completed all three worksheets. Your personalized feedback from Alex is on its way — keep an eye on your inbox."
-            : "Your responses have been saved. When the next video is released in the course, you'll receive a link to continue. You can close this tab."}
+            : "Your responses have been saved. You can close this tab and return to the course page. On that page, click \"Mark as complete\" to access the next video."}
         </p>
 
         {/* Review links for completed worksheets — no forward navigation. */}

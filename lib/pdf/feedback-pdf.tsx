@@ -64,9 +64,10 @@ export const DEFAULT_PDF_TEMPLATE: Omit<
   closing_paragraph:
     "If you haven't already, be sure to sign up for the free workshop to secure your seat before the next one fills up. You can do so by visiting www.expertfundraising.org.",
   signature_block:
-    "Expert Fundraising\nsupport@expertfundraising.org\nwww.expertfundraising.org",
-  accent_color: "#2D6A5F",
-  logo_url: null,
+    "Expert Fundraising\nThe Foundations of Donor Alignment\nsupport@expertfundraising.org",
+  accent_color: "#0D2B5C",
+  logo_url:
+    "https://uwmugthxwcaoezawsgkp.supabase.co/storage/v1/object/public/pdf-assets/logos/1776695009551-e9c0300c-09e9-4c92-a7ed-7f3e11de42e6.jpg",
 };
 
 // Exact closing sentence required by the course. Appended if the feedback
@@ -86,7 +87,7 @@ function makeStyles(accent: string) {
   return StyleSheet.create({
     page: {
       paddingTop: 56,
-      paddingBottom: 56,
+      paddingBottom: 96,
       paddingHorizontal: 56,
       fontFamily: "DMSans",
       fontSize: 11,
@@ -112,10 +113,7 @@ function makeStyles(accent: string) {
       marginBottom: 8,
     },
     greeting: {
-      fontFamily: "PlayfairDisplay",
-      fontSize: 14,
-      marginTop: 14,
-      marginBottom: 10,
+      marginBottom: 12,
       color: "#2A2A2A",
     },
     paragraph: {
@@ -140,9 +138,6 @@ function makeStyles(accent: string) {
     },
     answerBlock: {
       marginBottom: 12,
-      paddingLeft: 10,
-      borderLeftWidth: 2,
-      borderLeftColor: "#E8E4DF",
     },
     answerText: {
       fontStyle: "normal",
@@ -159,27 +154,29 @@ function makeStyles(accent: string) {
     feedbackText: {
       marginBottom: 4,
     },
-    divider: {
-      marginTop: 18,
-      marginBottom: 4,
-      borderBottomWidth: 1,
-      borderBottomColor: "#E8E4DF",
-    },
     closing: {
       marginTop: 24,
       marginBottom: 14,
     },
-    signature: {
-      marginTop: 24,
-      paddingTop: 14,
+    footer: {
+      position: "absolute",
+      bottom: 36,
+      left: 56,
+      right: 56,
+      paddingTop: 8,
       borderTopWidth: 1,
       borderTopColor: "#E8E4DF",
-      fontSize: 10,
+      fontSize: 9,
+      lineHeight: 1.2,
       color: "#555",
+      textAlign: "center",
+    },
+    footerLine: {
+      lineHeight: 1.2,
     },
     pageNumber: {
       position: "absolute",
-      bottom: 24,
+      bottom: 20,
       left: 0,
       right: 0,
       textAlign: "center",
@@ -189,22 +186,41 @@ function makeStyles(accent: string) {
   });
 }
 
+// Split text into alternating plain/URL segments so URLs can be styled inline.
+function renderWithUrls(text: string) {
+  const parts = text.split(/(https?:\/\/\S+)/g);
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <Text key={i} style={{ color: "#1d4ed8" }}>
+        {part}
+      </Text>
+    ) : (
+      <Text key={i}>{part}</Text>
+    )
+  );
+}
+
 // Render multi-line plain text as distinct paragraphs, preserving blank-line breaks.
 function Paragraphs({
   text,
   style,
+  renderUrls,
 }: {
   text: string;
   style?: Style;
+  renderUrls?: boolean;
 }) {
   const blocks = (text || "").split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
   return (
     <>
-      {blocks.map((block, i) => (
-        <Text key={i} style={style}>
-          {block.replace(/\n/g, " ")}
-        </Text>
-      ))}
+      {blocks.map((block, i) => {
+        const flat = block.replace(/\n/g, " ");
+        return (
+          <Text key={i} style={style}>
+            {renderUrls ? renderWithUrls(flat) : flat}
+          </Text>
+        );
+      })}
     </>
   );
 }
@@ -265,9 +281,9 @@ export function FeedbackDocument({
           )}
         </View>
 
-        <Paragraphs text={template.intro_paragraph} style={styles.paragraph} />
-
         <Text style={styles.greeting}>Hi {participant.name},</Text>
+
+        <Paragraphs text={template.intro_paragraph} style={styles.paragraph} />
 
         {/* Worksheet 1 */}
         <Text style={styles.sectionHeading}>{template.worksheet_1_heading}</Text>
@@ -280,8 +296,6 @@ export function FeedbackDocument({
         <Text style={styles.feedbackHeading}>Alex&apos;s Response</Text>
         <Paragraphs text={feedback.worksheet_1} style={styles.feedbackText} />
 
-        <View style={styles.divider} />
-
         {/* Worksheet 2 */}
         <Text style={styles.sectionHeading}>{template.worksheet_2_heading}</Text>
         {w2Keys.map((key) => (
@@ -292,8 +306,6 @@ export function FeedbackDocument({
         ))}
         <Text style={styles.feedbackHeading}>Alex&apos;s Response</Text>
         <Paragraphs text={feedback.worksheet_2} style={styles.feedbackText} />
-
-        <View style={styles.divider} />
 
         {/* Worksheet 3 */}
         <Text style={styles.sectionHeading}>{template.worksheet_3_heading}</Text>
@@ -309,12 +321,21 @@ export function FeedbackDocument({
           style={styles.feedbackText}
         />
 
+        <Text style={styles.feedbackHeading}>Your Next Step</Text>
         <View style={styles.closing}>
-          <Paragraphs text={template.closing_paragraph} style={styles.paragraph} />
+          <Paragraphs
+            text={template.closing_paragraph}
+            style={styles.paragraph}
+            renderUrls
+          />
         </View>
 
-        <View style={styles.signature}>
-          <Paragraphs text={template.signature_block} />
+        <View style={styles.footer} fixed>
+          {template.signature_block.split("\n").map((line, i) => (
+            <Text key={i} style={styles.footerLine}>
+              {line}
+            </Text>
+          ))}
         </View>
 
         <Text
