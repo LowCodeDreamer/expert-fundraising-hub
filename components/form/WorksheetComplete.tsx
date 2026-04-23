@@ -7,9 +7,16 @@ interface WorksheetCompleteProps {
   completedWorksheets: number[];
 }
 
+const COURSE_LINKS: Record<number, string> = {
+  1: "https://courses.expertfundraising.org/products/bc5bf0ce-b072-416c-a1fd-a43213d3e4bb/categories/66b69057-ecfc-4bbb-96ee-6b7f63076bd2/posts/ec23d364-ef50-4e5e-8064-c18870e1bfbb?source=courses",
+  2: "https://courses.expertfundraising.org/products/bc5bf0ce-b072-416c-a1fd-a43213d3e4bb/categories/4ceae6ab-1a62-4683-929b-66c1af805935/posts/f46081dc-cfdd-493f-aebf-65c0dcdb25e5?source=courses",
+  3: "https://courses.expertfundraising.org/products/bc5bf0ce-b072-416c-a1fd-a43213d3e4bb/categories/867856c4-22f7-4e9b-b5dc-9ec92b073129/posts/53a46713-2c03-4ee5-9e7f-ac06c43a9296?source=courses",
+};
+
 export function WorksheetComplete({ worksheetNumber, name, email, completedWorksheets }: WorksheetCompleteProps) {
   const reviewable = [...new Set(completedWorksheets)].sort((a, b) => a - b);
   const allThreeDone = reviewable.length === 3;
+  const courseLink = COURSE_LINKS[worksheetNumber];
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-6">
@@ -33,9 +40,22 @@ export function WorksheetComplete({ worksheetNumber, name, email, completedWorks
 
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           {allThreeDone
-            ? "You've completed all three worksheets. Your personalized feedback from Alex is on its way — keep an eye on your inbox."
-            : "Your responses have been saved. You can close this tab and return to the course page. On that page, click \"Mark as complete\" to access the next video."}
+            ? "You've completed all three worksheets. Head back to the course page and click \"Mark as complete\" to finish the course."
+            : "Your responses have been saved. Head back to the course page and click \"Mark as complete\" to unlock the next video."}
         </p>
+
+        {courseLink && (
+          <div className="mb-10">
+            <a
+              href={courseLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-8 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+            >
+              Return to course page →
+            </a>
+          </div>
+        )}
 
         {/* Review links for completed worksheets — no forward navigation. */}
         {reviewable.length > 0 && (
