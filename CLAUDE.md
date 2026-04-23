@@ -15,6 +15,14 @@ npm run start   # next start
 npm run lint    # eslint
 ```
 
+One-off scripts (run with `tsx`, loads `.env.local`):
+
+```bash
+npx tsx scripts/seed-test.ts    # seed a test participant + 3 worksheets
+npx tsx scripts/clean-test.ts   # remove test data
+npx tsx scripts/smoke-pdf.ts    # exercise the PDF render path locally
+```
+
 No test suite is configured. Node 22 (`.node-version`). Package manager: npm (`package-lock.json`).
 
 ## Stack
@@ -37,6 +45,7 @@ No test suite is configured. Node 22 (`.node-version`). Package manager: npm (`p
 - Each worksheet posts to `POST /api/submit-worksheet` which upserts the participant by email, upserts the worksheet submission (`unique(participant_id, worksheet_number)`), and — when all 3 worksheets exist — upserts a `feedback_jobs` row with `status='pending'`.
 - Question definitions live in `lib/form/questions.ts`. The Zod schemas in `app/api/submit-worksheet/route.ts` and `app/api/submit/route.ts` must stay in sync with them.
 - `POST /api/submit` is a legacy endpoint that accepts all three worksheets at once. Current UI does not use it; keep it working but new code should prefer `/api/submit-worksheet`.
+- `GET /api/feedback-status?email=` — polling endpoint used by the form's completion screen so participants see progress through `pending → generating → draft → approved → sent`.
 
 ### Feedback generation (fire-and-forget)
 
@@ -58,12 +67,16 @@ The same pattern runs on a schedule via `vercel.json` → daily cron at `/api/cr
 - `middleware.ts` protects `/admin/*` (except `/admin/login`) by checking the `admin_session=authenticated` cookie.
 - `POST /api/admin/login` compares body password against `ADMIN_PASSWORD` env var and sets the cookie (24h). All admin API routes re-check the cookie server-side.
 - `app/admin/page.tsx` is `force-dynamic` and enriches each participant row with worksheet count + feedback status.
-- Admin can edit/version the system prompt (`/admin/prompts`) — `prompt_configs` has a partial unique index so only one row can be active. Saving inserts a new version and flips the flag.
-- Admin reviews drafts at `/admin/review/[participantId]` and approves via `POST /api/approve`, which writes `human_edit` + `reviewer_notes`, sets `status='approved'`, then fire-and-forgets a delivery webhook to n8n (see below).
+- Admin can edit/version the system prompt (`/admin/prompts`) — `prompt_configs` has a partial unique index so only one row can be active. Saving inserts a new version and flips the flag. The PDF template config (`pdf_template_configs`) follows the same versioning pattern and is managed via `GET/POST /api/pdf-template-configs`.
+- Admin reviews drafts at `/admin/review/[participantId]`. The review UI autosaves edits via `POST /api/save-draft` (updates `human_edit` only, no status change), and approval goes through `POST /api/approve`, which writes `human_edit` + `reviewer_notes`, sets `status='approved'`, then fire-and-forgets a delivery webhook to n8n (see below).
 
 ### Delivery pipeline (n8n)
 
 After approval, the app hands off to an n8n cloud workflow that produces the PDF and emails the participant. The app does not touch Google APIs directly.
+
+The n8n workflow is authored in-repo as code at `n8n/deliver-feedback-pdf.workflow.ts` using the n8n Workflow SDK. Sync changes to the cloud instance via `mcp__n8n-mcp__update_workflow` (validate first with `validate_workflow`) — don't hand-edit in the n8n UI, the file is the source of truth.
+
+`@react-pdf/renderer` is also a dependency; it powers local PDF rendering for `scripts/smoke-pdf.ts` and any in-app preview. The production delivery path still runs through the n8n Google Docs template described below.
 
 1. `POST /api/approve` (after DB update) — loads participant + all 3 worksheet answers, builds the payload below, and POSTs it to `N8N_WEBHOOK_URL` with header `X-Webhook-Secret: $N8N_CALLBACK_SECRET`. Includes `callbackUrl` so the n8n workflow can call back into whatever app URL is current.
 2. **n8n workflow `EFH — Deliver Feedback PDF`** (`expertfundraising17.app.n8n.cloud`, id `7KA1rR3pxTOlQfhh`):
@@ -83,12 +96,13 @@ After approval, the app hands off to an n8n cloud workflow that produces the PDF
 
 ## Database
 
-Migrations live in `supabase/migrations/` and are intended to be applied in order (001 → 005). Authoritative schema lives here; `types/database.ts` mirrors it for the app. Schema highlights:
+Migrations live in `supabase/migrations/` and are intended to be applied in order (001 → 006). Authoritative schema lives here; `types/database.ts` mirrors it for the app. Schema highlights:
 
 - `participants` — `email` unique, `name NOT NULL` (first-time capture happens in worksheet 1).
 - `worksheet_submissions` — `unique(participant_id, worksheet_number)`; `answers` is JSONB validated per-worksheet by Zod in the API route.
 - `feedback_jobs` — one-to-one with participant (`participant_id` is unique). Status enum: `pending → generating → draft → approved → sent`. `ai_draft` is immutable once set; `human_edit` is what the admin edits.
 - `prompt_configs` — versioned, partial unique index on `is_active = true`.
+- `pdf_template_configs` (migration `006`) — versioned PDF template configs, same partial-unique-on-`is_active` pattern as `prompt_configs`.
 - `app_settings` — key/JSONB value store for feature flags (currently the time gate).
 
 Supabase MCP is configured in `.mcp.json` pointing at project ref `uwmugthxwcaoezawsgkp`. Use `mcp__supabase__execute_sql` / `apply_migration` to run migrations; falling back to the SQL editor works too.
