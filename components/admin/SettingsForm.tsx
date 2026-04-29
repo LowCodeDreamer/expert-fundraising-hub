@@ -124,7 +124,7 @@ export function SettingsForm() {
             disabled={!settings.time_gate_enabled}
           />
           <p className="text-xs text-muted-foreground">
-            Number of days after course start before feedback is generated (1-30)
+            Maximum days from course start to all 3 worksheets complete. If exceeded, feedback won&apos;t auto-generate (admin can still trigger manually). 1–30.
           </p>
         </div>
 

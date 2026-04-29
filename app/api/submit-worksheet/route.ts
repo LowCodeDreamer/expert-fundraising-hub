@@ -96,6 +96,19 @@ export async function POST(request: Request) {
 
     const participant = { id: participantId };
 
+    // Detect whether this is a brand-new submission or an edit of an existing
+    // worksheet. We only kick off feedback generation when the third worksheet
+    // *first arrives* — re-edits leave the existing feedback job state alone
+    // (so an admin's in-progress draft isn't wiped, and we don't re-spend on
+    // the LLM for trivial answer tweaks).
+    const { data: priorRow } = await supabase
+      .from("worksheet_submissions")
+      .select("id")
+      .eq("participant_id", participant.id)
+      .eq("worksheet_number", worksheetNumber)
+      .maybeSingle();
+    const isNewSubmission = !priorRow;
+
     // Upsert worksheet submission
     const { error: wsError } = await supabase
       .from("worksheet_submissions")
@@ -124,23 +137,67 @@ export async function POST(request: Request) {
 
     const totalCompleted = count ?? 0;
 
-    // If all 3 worksheets done, create feedback job
-    if (totalCompleted === 3) {
+    // When the third worksheet first arrives, evaluate the time gate inline
+    // and either kick off generation immediately or leave the job pending for
+    // an admin to handle. The daily cron at /api/cron/trigger-feedback stays
+    // as a safety net for pending jobs.
+    if (isNewSubmission && totalCompleted === 3) {
+      const [{ data: settingsRows }, { data: participantRow }] =
+        await Promise.all([
+          supabase
+            .from("app_settings")
+            .select("key, value")
+            .in("key", ["time_gate_enabled", "time_gate_days"]),
+          supabase
+            .from("participants")
+            .select("course_started_at")
+            .eq("id", participant.id)
+            .single(),
+        ]);
+
+      const settingsMap = Object.fromEntries(
+        (settingsRows || []).map(
+          (r: { key: string; value: unknown }) => [r.key, r.value]
+        )
+      );
+      const timeGateEnabled = settingsMap.time_gate_enabled ?? true;
+      const timeGateDays = Number(settingsMap.time_gate_days) || 7;
+
+      const startedAt = participantRow?.course_started_at
+        ? new Date(participantRow.course_started_at).getTime()
+        : Date.now();
+      const ageDays = (Date.now() - startedAt) / 86_400_000;
+      const withinGate = !timeGateEnabled || ageDays <= timeGateDays;
+
+      const nowIso = new Date().toISOString();
+
       await supabase.from("feedback_jobs").upsert(
         {
           participant_id: participant.id,
-          status: "pending",
+          status: withinGate ? "generating" : "pending",
           ai_draft: null,
           human_edit: null,
           error_message: null,
           reviewer_notes: null,
-          triggered_at: null,
+          triggered_at: withinGate ? nowIso : null,
           approved_at: null,
           sent_at: null,
-          updated_at: new Date().toISOString(),
+          updated_at: nowIso,
         },
         { onConflict: "participant_id" }
       );
+
+      if (withinGate) {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        // Fire-and-forget — generation runs on /api/generate/run with
+        // maxDuration=60 and writes its own status updates.
+        fetch(`${baseUrl}/api/generate/run`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ participantId: participant.id }),
+        }).catch(console.error);
+      }
     }
 
     return NextResponse.json({
