@@ -67,7 +67,7 @@ export const DEFAULT_PDF_TEMPLATE: Omit<
     "Expert Fundraising\nThe Foundations of Donor Alignment\nsupport@expertfundraising.org",
   accent_color: "#0D2B5C",
   logo_url:
-    "https://uwmugthxwcaoezawsgkp.supabase.co/storage/v1/object/public/pdf-assets/logos/1776695009551-e9c0300c-09e9-4c92-a7ed-7f3e11de42e6.jpg",
+    "https://uwmugthxwcaoezawsgkp.supabase.co/storage/v1/object/public/pdf-assets/logos/1777498489389-af104dbb-dacb-464f-9cbb-7f73afd933c1.jpg",
 };
 
 // Exact closing sentence required by the course. Appended if the feedback
@@ -96,13 +96,9 @@ function makeStyles(accent: string) {
     },
     header: {
       marginBottom: 24,
-      borderBottomWidth: 2,
-      borderBottomColor: accent,
-      paddingBottom: 16,
     },
     logo: {
       width: "100%",
-      marginBottom: 12,
     },
     coverTitle: {
       fontFamily: "PlayfairDisplay",
