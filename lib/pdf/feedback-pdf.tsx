@@ -101,8 +101,7 @@ function makeStyles(accent: string) {
       paddingBottom: 16,
     },
     logo: {
-      width: 280,
-      alignSelf: "center",
+      width: "100%",
       marginBottom: 12,
     },
     coverTitle: {
@@ -330,7 +329,7 @@ export function FeedbackDocument({
           />
         </View>
 
-        <View style={styles.footer} fixed>
+        <View style={styles.footer}>
           {template.signature_block.split("\n").map((line, i) => (
             <Text key={i} style={styles.footerLine}>
               {line}
